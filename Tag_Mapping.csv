@@ -1,0 +1,20 @@
+PI Tags,Generic Tag,Plant
+AR.AR2.DCS.QI12062.PV,Outlet_CO_from_Reformer_section,P2
+AR.AR2.DCS.QI12063.PV,Outlet_CO2_from_Reformer_section,P2
+AR.AR2.DCS.QI12064.PV,Outlet_H2_from_Reformer_section,P2
+AR.AR2.DCS.FC1301.PV,MUG_flow_to_Convertor,P2
+AR.AR2.DCS.QI1206.PV,Refromed_gas_mol_wt,P2
+AR.AR2.DCS.FC1302.PV,Recycle_syn_gas_flowrate,P2
+AR.AR3.DCS.QI33012.PV,Outlet_CO_from_Reformer_section,P3
+AR.AR3.DCS.QI33013.PV,Outlet_CO2_from_Reformer_section,P3
+AR.AR3.DCS.QI33014.PV,Outlet_H2_from_Reformer_section,P3
+AR.AR3.Sub Systems.ITCC.FI3301.PV,MUG_flow_to_Convertor,P3
+AR.AR3.DCS.QI3206.CPV,Refromed_gas_mol_wt,P3
+AR.AR3.DCS.FC3408.PV,Recycle_syn_gas_flowrate,P3
+AR.AR4.DCS.QI43012.PV,Outlet_CO_from_Reformer_section,P4
+AR.AR4.DCS.QI43013.PV,Outlet_CO2_from_Reformer_section,P4
+AR.AR4.DCS.QI43014.PV,Outlet_H2_from_Reformer_section,P4
+AR.AR4.Sub Systems.ITCC.FI4301.PV,MUG_flow_to_Convertor,P4
+AR.AR4.DCS.QI4206.CPV,Refromed_gas_mol_wt,P4
+AR.AR4.DCS.FC4408.PV,Recycle_syn_gas_flowrate,P4
+,,

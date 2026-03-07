@@ -1,0 +1,4 @@
+FORMULA,Inferred Tag Name,UOM,,
+Outlet_H2_from_Reformer_section/(2*Outlet_CO2_from_Reformer_section+3*Outlet_CO_from_Reformer_section),Loop M value,,,
+(MUG_flow_to_Convertor)*(9.59/Refromed_gas_mol_wt)**(1/2),RG_flowrate_from_Reformer_Section,knm3/hr,,
+(Recycle_syn_gas_flowrate)/(RG_flowrate_from_Reformer_Section),Recycle Ratio,,,
