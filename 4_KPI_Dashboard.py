@@ -81,7 +81,7 @@ if not kpi_history.empty:
     )
 
     kpi_filtered = kpi_history[
-        kpi_history["Inferred Tag Name"] == selected_kpi
+        kpi_history["KPI_Name"] == selected_kpi
     ]
     timestamp_list = sorted(
         kpi_filtered["Timestamp"].unique()

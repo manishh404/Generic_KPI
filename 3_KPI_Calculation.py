@@ -75,7 +75,7 @@ if st.button("Add KPI Formula"):
         variables = extract_variables(formula)
 
         available_tags = set(tag_map["Generic Tag"].dropna())
-        existing_kpis = set(formula_df["Inferred Tag Name"].dropna())
+        existing_kpis = set(formula_df["KPI_Name"].dropna())
 
         allowed_variables = available_tags.union(existing_kpis)
 
@@ -90,7 +90,7 @@ if st.button("Add KPI Formula"):
         else:
 
             new_kpi = pd.DataFrame({
-                "Inferred Tag Name":[kpi_name],
+                "KPI_Name":[kpi_name],
                 "FORMULA":[formula],
                 "UOM":[uom]
             })
@@ -166,7 +166,7 @@ if st.button("Run KPI Calculation"):
 
             results.append({
                 "Plant": plant,
-                "Inferred Tag Name": row["Inferred Tag Name"],
+                "kpi_name" = row["KPI_Name"],
                 "UOM": row["UOM"],
                 "Value": value,
                 "Timestamp": ts
