@@ -43,22 +43,26 @@ tag_map_df = pd.read_sql(
     engine
 )
 
-edited = st.data_editor(
-tag_map_df, use_container_width=True)
+with st.expander("View / Edit Tag Mapping Table"):
 
-if st.button("Update Mapping"):
+    edited = st.data_editor(
+        tag_map_df,
+        use_container_width=True
+    )
 
-    with engine.begin() as conn:
+    if st.button("Update Mapping"):
 
-        edited.to_sql(
-            "Tag_Mapping",
-            conn,
-            schema=schema,
-            if_exists="replace",
-            index=False
-        )
+        with engine.begin() as conn:
 
-    st.success("Mapping Updated")
+            edited.to_sql(
+                "Tag_Mapping",
+                conn,
+                schema=schema,
+                if_exists="replace",
+                index=False
+            )
+
+        st.success("Mapping Updated")
 
 input_df = pd.read_sql(
     f'SELECT * FROM "{schema}"."Input_data"',
