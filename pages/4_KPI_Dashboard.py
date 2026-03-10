@@ -24,6 +24,10 @@ mapped_df["Timestamp"] = pd.to_datetime(
     format="mixed",
     errors="coerce"
 )
+formula_df = pd.read_sql(
+    f'SELECT * FROM "{schema}"."KPI_Calculation"',
+    engine
+)
 # fix duplicate plant columns
 if "Plant_y" in mapped_df.columns:
     mapped_df.rename(columns={"Plant_y": "Plant"}, inplace=True)
@@ -73,7 +77,11 @@ kpi_history = kpi_history[
 ]
 if not kpi_history.empty:
 
-    kpi_list = kpi_history["Inferred Tag Name"].unique()
+    kpi_list = sorted(
+    set(formula_df["KPI_Name"].dropna()).union(
+        set(kpi_history["KPI_Name"].dropna())
+    )
+)
 
     selected_kpi = st.selectbox(
         "Select KPI for Trend",
@@ -81,8 +89,12 @@ if not kpi_history.empty:
     )
 
     kpi_filtered = kpi_history[
-        kpi_history["KPI_Name"] == selected_kpi
-    ]
+    kpi_history["KPI_Name"] == selected_kpi
+]
+
+    if kpi_filtered.empty:
+        st.warning("No calculated data available for this KPI yet.")
+        st.stop()
     timestamp_list = sorted(
         kpi_filtered["Timestamp"].unique()
     )
