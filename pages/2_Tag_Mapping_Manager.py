@@ -2,75 +2,70 @@ import streamlit as st
 import pandas as pd
 from db import engine, schema
 
+st.set_page_config(page_title="Tag Mapping Manager", layout="wide")
 st.title("Tag Mapping Manager")
 
 # -----------------------------
-# Upload Tag Mapping
+# 1. Upload Tag Mapping (Sidebar)
 # -----------------------------
-
 st.sidebar.header("Upload Data")
 
 mapping_file = st.sidebar.file_uploader(
     "Upload Tag Mapping (with Plant column)",
-    type=["csv","xlsx"]
+    type=["csv", "xlsx"]
 )
 
 if mapping_file is not None:
-
     if mapping_file.name.endswith("csv"):
-        tag_map_df = pd.read_csv(mapping_file)
+        upload_df = pd.read_csv(mapping_file)
     else:
-        tag_map_df = pd.read_excel(mapping_file)
+        upload_df = pd.read_excel(mapping_file)
 
-    # st.subheader("Tag Mapping Preview")
-    # st.dataframe(tag_map_df)
-
-    if st.button("Upload Tag Mapping to DB"):
-
+    if st.sidebar.button("Upload Tag Mapping to DB"):
         with engine.begin() as conn:
-
-            tag_map_df.to_sql(
+            upload_df.to_sql(
                 "Tag_Mapping",
                 conn,
                 schema=schema,
                 if_exists="replace",
                 index=False
             )
+        st.sidebar.success("Tag_Mapping table updated")
+        st.rerun()
 
-        st.success("Tag_Mapping table updated")
+# -----------------------------
+# 2. Fetch Current Mapping & Show Warnings
+# -----------------------------
+# Read the current state of the mapping table
 tag_map_df = pd.read_sql(
     f'SELECT * FROM "{schema}"."Tag_Mapping"',
     engine
 )
-# 1. Filter rows where Generic Tag is present but PI Tag is empty/null
+
+# LOGIC: Check if a Generic Tag exists but the PI Tag is empty/null
 unmapped_generic = tag_map_df[
     (tag_map_df["Generic Tag"].notna()) & (tag_map_df["Generic Tag"].astype(str).str.strip() != "") &
     (tag_map_df["PI Tags"].isna() | (tag_map_df["PI Tags"].astype(str).str.strip() == ""))
 ]
 
-# 2. Display the warnings
 if not unmapped_generic.empty:
+    st.subheader("⚠️ Mapping Alerts")
     for g_tag in unmapped_generic["Generic Tag"].unique():
-        st.warning(f"⚠️ Warning: Generic Tag **{g_tag}** has no PI Tag mapping (Empty).")
-# ---------------------------------------------------------
+        st.warning(f"Generic Tag **{g_tag}** has no PI Tag mapping (Empty).")
 
-# --- CONTINUE WITH YOUR EXISTING CODE ---
-with st.expander("View / Edit Tag Mapping Table"):
+# -----------------------------
+# 3. View / Edit Full Mapping Table
+# -----------------------------
+with st.expander("View / Edit Tag Mapping Table", expanded=False):
+    # Added unique key to prevent DuplicateElementId error
     edited = st.data_editor(
         tag_map_df,
-        use_container_width=True
-    )
-with st.expander("View / Edit Tag Mapping Table"):
-
-    edited = st.data_editor(
-        tag_map_df,
-        use_container_width=True
+        use_container_width=True,
+        key="main_mapping_editor"
     )
 
-    if st.button("Update Mapping"):
-
+    if st.button("Update Mapping", key="save_main_table"):
         with engine.begin() as conn:
-
             edited.to_sql(
                 "Tag_Mapping",
                 conn,
@@ -78,24 +73,24 @@ with st.expander("View / Edit Tag Mapping Table"):
                 if_exists="replace",
                 index=False
             )
-
         st.success("Mapping Updated")
+        st.rerun()
 
+# -----------------------------
+# 4. Detect & Fix Unmapped PI Tags from Input Data
+# -----------------------------
 input_df = pd.read_sql(
     f'SELECT * FROM "{schema}"."Input_data"',
     engine
 )
-# -----------------------------
-# Detect Unmapped PI Tags
-# -----------------------------
 
-missing_tags = set(input_df["PI Tags"].unique()) - set(tag_map_df["PI Tags"].unique())
-
-missing_tags = list(missing_tags)
+# Find PI Tags in Input_data that are NOT in the Tag_Mapping table
+missing_tags = list(set(input_df["PI Tags"].unique()) - set(tag_map_df["PI Tags"].unique()))
 
 if missing_tags:
-
-    st.subheader("Unmapped PI Tags - Add Generic Tag Mapping")
+    st.divider()
+    st.subheader("New PI Tags Detected")
+    st.info("The following tags were found in your Input Data but are not yet mapped.")
 
     missing_df = pd.DataFrame({
         "PI Tags": missing_tags,
@@ -103,25 +98,23 @@ if missing_tags:
         "Plant": ["" for _ in missing_tags]
     })
 
-    edited_df = st.data_editor(
+    # Added unique key to prevent DuplicateElementId error
+    edited_new_tags = st.data_editor(
         missing_df,
         num_rows="dynamic",
-        use_container_width=True
+        use_container_width=True,
+        key="missing_tags_editor"
     )
 
-    if st.button("Add New Tag Mappings"):
-
-        new_tags = edited_df[
-            (edited_df["Generic Tag"] != "") &
-            (edited_df["Plant"] != "")
+    if st.button("Add New Tag Mappings", key="add_new_tags_btn"):
+        new_tags = edited_new_tags[
+            (edited_new_tags["Generic Tag"] != "") & 
+            (edited_new_tags["Plant"] != "")
         ]
 
         if not new_tags.empty:
-
             new_tags = new_tags.drop_duplicates(subset=["PI Tags"])
-
             with engine.begin() as conn:
-
                 new_tags.to_sql(
                     "Tag_Mapping",
                     conn,
@@ -130,11 +123,7 @@ if missing_tags:
                     index=False,
                     method="multi"
                 )
-
-            st.success("New PI tags added to Tag_Mapping table")
-
+            st.success("New PI tags added successfully!")
             st.rerun()
-
         else:
-            st.warning("Please enter Generic Tag and Plant for new PI tags")
-
+            st.error("Please provide both a Generic Tag and a Plant name before saving.")
