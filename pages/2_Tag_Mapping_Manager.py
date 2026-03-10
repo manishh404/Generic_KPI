@@ -42,7 +42,24 @@ tag_map_df = pd.read_sql(
     f'SELECT * FROM "{schema}"."Tag_Mapping"',
     engine
 )
+# 1. Filter rows where Generic Tag is present but PI Tag is empty/null
+unmapped_generic = tag_map_df[
+    (tag_map_df["Generic Tag"].notna()) & (tag_map_df["Generic Tag"].astype(str).str.strip() != "") &
+    (tag_map_df["PI Tags"].isna() | (tag_map_df["PI Tags"].astype(str).str.strip() == ""))
+]
 
+# 2. Display the warnings
+if not unmapped_generic.empty:
+    for g_tag in unmapped_generic["Generic Tag"].unique():
+        st.warning(f"⚠️ Warning: Generic Tag **{g_tag}** has no PI Tag mapping (Empty).")
+# ---------------------------------------------------------
+
+# --- CONTINUE WITH YOUR EXISTING CODE ---
+with st.expander("View / Edit Tag Mapping Table"):
+    edited = st.data_editor(
+        tag_map_df,
+        use_container_width=True
+    )
 with st.expander("View / Edit Tag Mapping Table"):
 
     edited = st.data_editor(
@@ -120,3 +137,4 @@ if missing_tags:
 
         else:
             st.warning("Please enter Generic Tag and Plant for new PI tags")
+
