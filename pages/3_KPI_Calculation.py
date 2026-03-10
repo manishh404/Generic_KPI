@@ -114,21 +114,26 @@ if st.button("Add KPI Formula"):
         st.warning("Please enter KPI Name and Formula")
 
 
-edited_formula = st.data_editor(formula_df)
+#show_table = with st.checkbox("Show KPI Formula Table")
+with st.expander("View / Edit KPI Formulas"):
 
-if st.button("Update KPI Formulas"):
+#if show_table:
 
-    with engine.begin() as conn:
+    edited_formula = st.data_editor(formula_df)
 
-        edited_formula.to_sql(
-            "KPI_Calculation",
-            conn,
-            schema=schema,
-            if_exists="replace",
-            index=False
-        )
+    if st.button("Update KPI Formulas"):
 
-    st.success("KPI formulas updated")
+        with engine.begin() as conn:
+
+            edited_formula.to_sql(
+                "KPI_Calculation",
+                conn,
+                schema=schema,
+                if_exists="replace",
+                index=False
+            )
+
+        st.success("KPI formulas updated")
 
 mapped_df = input_df.merge(
     tag_map[["PI Tags","Generic Tag","Plant"]],
@@ -154,22 +159,31 @@ if st.button("Run KPI Calculation"):
 
     for ts, df_group in plant_df.groupby("Timestamp"):
 
-        tag_values = dict(zip(df_group["Generic Tag"], df_group["Value"]))
+         tag_values = dict(zip(df_group["Generic Tag"], df_group["Value"]))
 
-        for _, row in formula_df.iterrows():
+         for _, row in formula_df.iterrows():
 
-            try:
-                value = eval(row["FORMULA"], {}, tag_values)
-                tag_values[row["Inferred Tag Name"]] = value
-            except:
-                value = None
+             kpi_name = row["KPI_Name"]
+             formula = row["FORMULA"]
+             uom= row["UOM"]
+             try:
+                 value = eval(formula, {}, tag_values)
 
-            results.append({
-                "Plant": plant,
-                "kpi_name" = row["KPI_Name"],
-                "UOM": row["UOM"],
-                "Value": value,
-                "Timestamp": ts
+                 # store KPI result so next KPI can use it
+                 tag_values[kpi_name] = value
+
+             except Exception as e:
+                 st.warning(f"{kpi_name} failed at {ts}")
+                 st.write("Formula:", formula)
+                 st.write("Available variables:", tag_values)
+                 st.error(e)
+
+                 results.append({
+                    "Plant": plant,
+                    "KPI_Name": kpi_name,
+                    "UOM": row["UOM"],
+                    "Value": value,
+                    "Timestamp": ts
             })
 
     out = pd.DataFrame(results)
